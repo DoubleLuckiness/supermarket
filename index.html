@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超市管理系统 - LeanCloud 测试</title>
+    <!-- 使用可靠的 CDN -->
+    <script src="js/av-min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+        
+        .config-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 5px solid #3498db;
+        }
+        
+        .config-box h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .config-box h3::before {
+            content: "⚙️";
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #95a5a6;
+        }
+        
+        .status-dot.connected { background: #2ecc71; animation: pulse 2s infinite; }
+        .status-dot.disconnected { background: #e74c3c; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            flex: 2;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #ecf0f1;
+            color: #2c3e50;
+            flex: 1;
+        }
+        
+        .btn-secondary:hover {
+            background: #d5dbdb;
+        }
+        
+        .result-box {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            min-height: 200px;
+            display: none;
+        }
+        
+        .result-box.active {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .success-msg {
+            color: #27ae60;
+            padding: 15px;
+            background: #d5f4e6;
+            border-radius: 8px;
+            border-left: 4px solid #27ae60;
+            margin: 15px 0;
+        }
+        
+        .error-msg {
+            color: #e74c3c;
+            padding: 15px;
+            background: #fadbd8;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+            margin: 15px 0;
+        }
+        
+        .loading {
+            color: #3498db;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .test-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .domain-info {
+            background: #fff8e1;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #ffb300;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏪 超市管理系统</h1>
+        <p class="subtitle">LeanCloud 后端服务连接测试</p>
+    </div>
+    
+    <div class="config-box">
+        <h3>配置信息</h3>
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">等待连接测试</span>
+        </div>
+        
+        <div class="domain-info">
+            <strong>🌐 当前域名：</strong>
+            <code id="currentDomain"></code>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                确保已在 LeanCloud 控制台的 <strong>Web 安全域名</strong> 中添加此域名
+            </p>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-primary" onclick="testConnection()">
+                <span>🔗 测试连接</span>
+            </button>
+            <button class="btn-secondary" onclick="resetTest()">
+                <span>🔄 重置</span>
+            </button>
+        </div>
+    </div>
+    
+    <div class="result-box" id="resultBox">
+        <!-- 结果会动态显示在这里 -->
+    </div>
+    
+    <div class="footer">
+        <p>前端部署在：https://doubleluckiness.github.io/supermarket/</p>
+        <p>如果连接失败，请检查 LeanCloud Web 安全域名配置</p>
+    </div>
+
+    <script>
+        // ==================== 配置区域 ====================
+        // 在这里填写你的 LeanCloud 配置（从控制台复制）
+        const LEANCLOUD_CONFIG = {
+            appId: 'AwXkql18rsZZ276uJtabPPUQ-gzGzoHsz',      // 替换为你的 App ID
+            appKey: '6dYgDhh7r1ZQXx1dxwW1wc0L',       // 替换为你的 App Key
+            serverURL: 'https://AwXkql18.api.lncldapi.com'  // 替换为你的 API 地址
+        };
+        // ==================== 配置结束 ====================
+        
+        // 显示当前域名
+        document.getElementById('currentDomain').textContent = window.location.origin;
+        
+        // 更新状态指示器
+        function updateStatus(text, type) {
+            const dot = document.getElementById('statusDot');
+            const textEl = document.getElementById('statusText');
+            
+            textEl.textContent = text;
+            dot.className = 'status-dot';
+            
+            if (type === 'success') {
+                dot.classList.add('connected');
+            } else if (type === 'error') {
+                dot.classList.add('disconnected');
+            }
+        }
+        
+        // 测试连接
+        async function testConnection() {
+            const resultBox = document.getElementById('resultBox');
+            resultBox.className = 'result-box active';
+            
+            // 第一步：显示加载状态
+            resultBox.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>正在初始化 LeanCloud 连接...</p>
+                </div>
+            `;
+            
+            updateStatus('正在连接...', 'loading');
+            
+            try {
+                // 检查 SDK 是否加载
+                if (typeof AV === 'undefined') {
+                    throw new Error('LeanCloud SDK 未加载，请检查网络或CDN');
+                }
+                
+                // 初始化 AV
+                AV.init({
+                    appId: LEANCLOUD_CONFIG.appId,
+                    appKey: LEANCLOUD_CONFIG.appKey,
+                    serverURLs: LEANCLOUD_CONFIG.serverURL
+                });
+                
+                resultBox.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>SDK 初始化成功，正在测试数据存储...</p>
+                    </div>
+                `;
+                
+                // 创建测试类（使用唯一名称）
+                const className = 'TestConnection_' + Date.now();
+                const TestClass = AV.Object.extend(className);
+                
+                // 创建测试数据
+                const testData = {
+                    appName: '超市管理系统',
+                    testTime: new Date(),
+                    testField: 'GitHub Pages 连接测试',
+                    environment: 'production',
+                    domain: window.location.origin
+                };
+                
+                const testObj = new TestClass();
+                Object.keys(testData).forEach(key => {
+                    testObj.set(key, testData[key]);
+                });
+                
+                // 保存到 LeanCloud
+                const savedObj = await testObj.save();
+                
+                // 查询验证
+                const query = new AV.Query(className);
+                query.equalTo('objectId', savedObj.id);
+                const retrievedObj = await query.first();
+                
+                // 显示成功结果
+                resultBox.innerHTML = `
+                    <div class="success-msg">
+                        <h3>🎉 连接测试成功！</h3>
+                        <p>你的前端已成功连接到 LeanCloud 后端服务</p>
+                    </div>
+                    
+                    <div class="test-details">
+                        <p><strong>📋 测试详情：</strong></p>
+                        <p>📌 测试对象ID：${savedObj.id}</p>
+                        <p>📌 应用名称：${retrievedObj.get('appName')}</p>
+                        <p>📌 测试时间：${new Date(retrievedObj.get('testTime')).toLocaleString()}</p>
+                        <p>📌 测试字段：${retrievedObj.get('testField')}</p>
+                        <p>📌 运行环境：${retrievedObj.get('environment')}</p>
+                        <p>📌 当前域名：${retrievedObj.get('domain')}</p>
+                        <p>📌 创建时间：${new Date(retrievedObj.createdAt).toLocaleString()}</p>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 8px;">
+                        <p><strong>✅ 配置验证通过：</strong></p>
+                        <ul style="margin-top: 10px;">
+                            <li>App ID 配置正确</li>
+                            <li>App Key 配置正确</li>
+                            <li>Server URL 配置正确</li>
+                            <li>Web 安全域名配置正确</li>
+                            <li>网络连接正常</li>
+                        </ul>
+                    </div>
+                `;
+                
+                updateStatus('连接成功', 'success');
+                
+                // 清理测试数据（延迟执行）
+                setTimeout(async () => {
+                    try {
+                        await savedObj.destroy();
+                        console.log('🧹 测试数据已清理');
+                    } catch (e) {
+                        console.warn('清理数据失败:', e);
+                    }
+                }, 3000);
+                
+            } catch (error) {
+                // 显示错误信息
+                resultBox.innerHTML = `
+                    <div class="error-msg">
+                        <h3>❌ 连接测试失败</h3>
+                        <p><strong>错误信息：</strong>${error.message}</p>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 20px; background: #ffebee; border-radius: 8px;">
+                        <h4>🔧 故障排除步骤：</h4>
+                        <ol style="margin-top: 10px; padding-left: 20px;">
+                            <li><strong>检查 Web 安全域名：</strong>
+                                <p>登录 LeanCloud 控制台 → 设置 → 安全中心 → Web 安全域名</p>
+                                <p>添加：<code>https://doubleluckiness.github.io</code></p>
+                            </li>
+                            <li><strong>检查 App ID 和 Key：</strong>
+                                <p>确认配置中的 App ID 和 App Key 是否正确</p>
+                            </li>
+                            <li><strong>检查网络连接：</strong>
+                                <p>确保可以访问 LeanCloud API 地址</p>
+                            </li>
+                            <li><strong>检查控制台错误：</strong>
+                                <p>按 F12 打开开发者工具，查看 Console 和 Network 标签页</p>
+                            </li>
+                        </ol>
+                    </div>
+                    
+                    <div class="test-details" style="margin-top: 20px;">
+                        <p><strong>📊 调试信息：</strong></p>
+                        <p>当前域名：${window.location.origin}</p>
+                        <p>错误代码：${error.code || '无'}</p>
+                        <p>错误详情：${JSON.stringify(error, null, 2)}</p>
+                    </div>
+                `;
+                
+                updateStatus('连接失败', 'error');
+                console.error('连接失败详情:', error);
+            }
+        }
+        
+        // 重置测试
+        function resetTest() {
+            const resultBox = document.getElementById('resultBox');
+            resultBox.className = 'result-box';
+            resultBox.innerHTML = '';
+            updateStatus('等待连接测试', '');
+        }
+        
+        // 页面加载时自动检查
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🏪 超市管理系统 - LeanCloud 测试页面已加载');
+            console.log('🌐 当前域名:', window.location.origin);
+            console.log('🔧 请确保在 LeanCloud 中添加 Web 安全域名:', window.location.origin);
+        });
+    </script>
+</body>
+</html>
